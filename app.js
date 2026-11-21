@@ -975,7 +975,7 @@
     const title = pt.structure === 'minimal-poster' ? '제안서' : (pt.structure === 'brutal-block' ? 'PROPOSAL' : '프로젝트 제안');
     const chip = pt.structure === 'minimal-poster' ? '검토 요청' : (pt.structure === 'pop-stack' ? '9.79만' : '2026.12.14');
     const mass = pt.structure === 'minimal-poster' ? 'QUOTATION' : '₩979,000';
-    return '<div class="dc-thumb ' + cls + '" style="' + esc(style) + '">' +
+    return '<div class="dc-thumb ' + cls + '" style="' + esc(style) + '" aria-hidden="true">' +
       '<div class="dc-thumb-inner">' +
         '<span class="dc-kicker">PROPOSAL</span>' +
         '<div class="dc-title">' + esc(title) + '</div>' +
@@ -1065,7 +1065,7 @@
           '<div class="dc-head"><b>' + esc(t.name) + '</b></div>' +
           '<p>' + esc(t.tagline || '') + '</p>' +
           '<div class="dc-badges">' + badges.join('') + '</div>' +
-          '<button type="button" class="btn ' + (isOn ? 'btn-ghost' : 'btn-primary') + ' btn-sm dc-apply" data-action="apply-design" data-design="' + esc(t.id) + '">' +
+          '<button type="button" class="btn btn-ghost btn-sm dc-apply" data-action="apply-design" data-design="' + esc(t.id) + '">' +
             (isOn ? '적용됨' : '이 디자인 적용') + '</button>' +
         '</div>' +
       '</article>';
@@ -1829,7 +1829,7 @@
     const btn = $('[data-action="toggle-theme"]');
     if (btn) btn.setAttribute('aria-label', state.theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환');
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', state.theme === 'dark' ? '#080a0f' : '#ffffff');
+    if (meta) meta.setAttribute('content', state.theme === 'dark' ? '#0C0D0F' : '#FAFAFA');
   }
 
   /* ---------- events ---------- */

@@ -37,11 +37,11 @@
     id: 'studio',
     name: '스튜디오 기본',
     nameEn: 'Studio Default',
-    tagline: '지금 앱의 핑크 포인트 그대로. 단정한 문서형.',
-    keywords: ['핑크 포인트', '문서형', '균형'],
+    tagline: 'A안 Crisp Bento — 순백 · 잉크 · 코발트 한 색의 단정한 문서형.',
+    keywords: ['코발트 포인트', '문서형', '균형'],
     palette: {
-      bg: '#FFFFFF', surface: '#F7F8FB', ink: '#14161B', sub: '#666E7B',
-      line: '#E6E9EF', accent: '#DE1A53', accentInk: '#FFFFFF', accentSoft: '#FFF3F0'
+      bg: '#FFFFFF', surface: '#F5F6F7', ink: '#0C0D0F', sub: '#545A61',
+      line: '#E7E8EA', accent: '#2F5BFF', accentInk: '#FFFFFF', accentSoft: '#EEF2FF'
     },
     ratio: { bg: 70, surface: 20, accent: 10 },
     type: {
@@ -315,7 +315,7 @@
       '--p-ink': c.ink,
       '--p-ink-2': mix(c.ink, c.bg, 0.18),
       '--p-ink-3': c.sub,
-      '--p-ink-4': mix(c.sub, c.bg, 0.42),
+      '--p-ink-4': mix(c.sub, c.bg, 0.14),
       '--p-line': c.line,
       '--p-line-2': mix(c.line, c.bg, 0.5),
       '--p-brand': c.accent,
