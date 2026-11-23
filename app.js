@@ -1603,10 +1603,21 @@
       '</div>';
   }
 
+  /* 무료 체험은 짧은 초안만(Worker 12초 제한 실측). Pro/브리지는 전체 제안서 프롬프트. */
+  function freeDraftPrompt() {
+    const d = state.doc || {};
+    const c = d.client || {};
+    const pj = d.project || {};
+    const topic = String(pj.summary || d.meta && d.meta.title || '').trim();
+    if (!topic) return '';
+    return '너는 대행사 제안서 작성자다. 고객사: ' + (c.company || '고객사') + '. 프로젝트: ' + topic + '. ' +
+      '[요약] 한 줄, [배경] 2문장, [범위] 3개, [산출물] 3개 형식으로 짧게 써라. 600자 이내. 없는 수치 금지.';
+  }
+
   function freeGenerate() {
     if (!FA) { toast('무료 체험 엔진을 불러오지 못했습니다.', { warn: true }); return; }
     if (freeBusy) return;
-    const prompt = promptNow();
+    const prompt = freeDraftPrompt();
     if (!prompt) { toast('제안서 정보를 먼저 입력하세요.', { warn: true }); return; }
     freeBusy = true;
     const btn = $('[data-action="free-generate"]');
@@ -1616,7 +1627,7 @@
     if ($('#freeLimitCard')) $('#freeLimitCard').hidden = true;
     const done = function () { freeBusy = false; if (btn) { btn.disabled = false; btn.textContent = '무료 AI로 초안 받기'; } };
 
-    FA.generate({ task: 'text', prompt: prompt, options: { temperature: 0.7, maxTokens: 900 } }, { timeoutMs: 45000 })
+    FA.generate({ task: 'text', prompt: prompt, options: { temperature: 0.7, maxTokens: 600 } }, { timeoutMs: 45000 })
       .then(function (res) {
         done();
         if (res && res.ok) {
