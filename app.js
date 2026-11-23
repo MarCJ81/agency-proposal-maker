@@ -13,7 +13,7 @@
   const CP = window.CopyPsych || null;      // engines/copy-psych-engine.js
   const B = window.AiBridge || null;        // engines/ai-bridge.js
   const FA = window.FreeAI || null;         // engines/free-ai-client.js
-  if (FA) FA.configure({ endpoint: 'https://free-ai-taste.goodday810202.workers.dev', app: 'agency-proposal-maker' });
+  if (FA) FA.configure({ endpoint: 'https://free-ai-taste.onetap-ai.workers.dev', app: 'agency-proposal-maker' });
   const $ = (sel, root) => (root || document).querySelector(sel);
   const $$ = (sel, root) => Array.prototype.slice.call((root || document).querySelectorAll(sel));
 
