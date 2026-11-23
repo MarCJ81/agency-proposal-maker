@@ -12,6 +12,8 @@
   const AD = window.AgencyDesign || null;   // design.js (테마·추천·팔레트)
   const CP = window.CopyPsych || null;      // engines/copy-psych-engine.js
   const B = window.AiBridge || null;        // engines/ai-bridge.js
+  const FA = window.FreeAI || null;         // engines/free-ai-client.js
+  if (FA) FA.configure({ endpoint: 'https://free-ai-taste.goodday810202.workers.dev', app: 'agency-proposal-maker' });
   const $ = (sel, root) => (root || document).querySelector(sel);
   const $$ = (sel, root) => Array.prototype.slice.call((root || document).querySelectorAll(sel));
 
@@ -1582,6 +1584,64 @@
     });
   }
 
+  /* ── 무료 AI 맛보기 (Cloudflare Worker) ───────────────── */
+  let freeBusy = false;
+  function renderFreeLimit(res) {
+    const card = $('#freeLimitCard');
+    const st = $('#freeStatus');
+    if (st) st.textContent = '오늘 무료 횟수를 다 썼어요';
+    if (!card) return;
+    const cta = (res && res.cta) || {};
+    const href = cta.keyUrl || 'https://aistudio.google.com/apikey';
+    card.hidden = false;
+    card.innerHTML =
+      '<b>무료 체험을 다 쓰셨습니다</b>' +
+      '<div>' + String((res && res.message) || '내 무료 키나 구독 AI로 이어서 쓰세요.').replace(/</g, '&lt;') + '</div>' +
+      '<div class="free-limit-actions">' +
+        '<a class="btn btn-primary btn-sm" href="' + href + '" target="_blank" rel="noopener noreferrer">내 무료 Gemini 키 연결</a>' +
+        '<button type="button" class="btn btn-ghost btn-sm" data-action="ai-copy-prompt">프롬프트 복사</button>' +
+      '</div>';
+  }
+
+  function freeGenerate() {
+    if (!FA) { toast('무료 체험 엔진을 불러오지 못했습니다.', { warn: true }); return; }
+    if (freeBusy) return;
+    const prompt = promptNow();
+    if (!prompt) { toast('제안서 정보를 먼저 입력하세요.', { warn: true }); return; }
+    freeBusy = true;
+    const btn = $('[data-action="free-generate"]');
+    if (btn) { btn.disabled = true; btn.textContent = '무료 AI가 쓰는 중…'; }
+    const st = $('#freeStatus');
+    if (st) st.textContent = '무료로 생성 중… (5~20초)';
+    if ($('#freeLimitCard')) $('#freeLimitCard').hidden = true;
+    const done = function () { freeBusy = false; if (btn) { btn.disabled = false; btn.textContent = '무료 AI로 초안 받기'; } };
+
+    FA.generate({ task: 'text', prompt: prompt, options: { temperature: 0.7, maxTokens: 900 } }, { timeoutMs: 45000 })
+      .then(function (res) {
+        done();
+        if (res && res.ok) {
+          const input = $('#aiDraftInput');
+          if (input) {
+            input.value = res.text;
+            if ($('#aiPaste')) $('#aiPaste').open = true;
+            renderAiDraft();
+            input.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          }
+          if (st) st.textContent = '무료로 받았습니다' + (res.provider ? ' · ' + res.provider : '');
+          const rem = $('#freeRemain');
+          if (rem && res.remaining !== undefined && res.remaining !== null) rem.textContent = '남은 무료 ' + res.remaining + '/' + (res.limit || 5) + '회';
+          toast('초안을 받았습니다 · [제안서에 적용]을 누르세요');
+          return;
+        }
+        if (FA.isQuota(res)) { renderFreeLimit(res); return; }
+        if (st) st.textContent = (res && res.message) || '무료 생성에 실패했습니다.';
+        toast((res && res.message) || '무료 생성에 실패했습니다.', { warn: true });
+      }, function () {
+        done();
+        toast('무료 체험에 연결하지 못했습니다.', { warn: true });
+      });
+  }
+
   function renderBridge() {
     const box = $('#bridgeBtns');
     if (!box) return;
@@ -1883,9 +1943,39 @@
     toast('항목을 삭제했습니다', { action: '되돌리기', onAction: undoLast });
   }
 
+  /* ── PDF 파일 내보내기 (jsPDF · 좌표 고정 A4) ─────────────── */
+  let pdfBusy = false;
+  function runPdfExport() {
+    if (pdfBusy) return;
+    if (!window.ProposalPDF) {
+      toast('PDF 엔진을 불러오지 못했습니다. 새로고침 뒤 다시 시도해 주세요.', { warn: true });
+      return;
+    }
+    pdfBusy = true;
+    const btns = $$('[data-action="pdf-export"]');
+    const labels = btns.map(function (b) { return b.textContent; });
+    btns.forEach(function (b) { b.setAttribute('aria-busy', 'true'); b.disabled = true; b.textContent = 'PDF 만드는 중…'; });
+    const done = function () {
+      pdfBusy = false;
+      btns.forEach(function (b, i) { b.removeAttribute('aria-busy'); b.disabled = false; b.textContent = labels[i]; });
+    };
+    window.ProposalPDF.export(state.doc, {}).then(function (res) {
+      done();
+      if (res && res.ok) {
+        toast('PDF를 내려받았습니다 · ' + res.pages + '쪽 · 여백과 페이지 나눔이 고정된 파일입니다');
+        return;
+      }
+      toast((res && res.message) || 'PDF를 만들지 못했습니다. 인쇄로 저장해 주세요.', { warn: true });
+    }, function () {
+      done();
+      toast('PDF를 만들지 못했습니다. 인쇄로 저장해 주세요.', { warn: true });
+    });
+  }
+
   function handleAction(action, el) {
     switch (action) {
       case 'print': window.print(); break;
+      case 'pdf-export': runPdfExport(); break;
       case 'copy-summary':
         copyText(C.summaryText(state.doc)).then(function (ok) {
           toast(ok ? '메일·카톡에 붙여넣을 요약을 복사했습니다' : '복사에 실패했습니다', ok ? null : { warn: true });
@@ -1956,6 +2046,7 @@
         if ($('#geminiStatus')) { $('#geminiStatus').className = 'form-ok'; $('#geminiStatus').textContent = '키를 이 브라우저에만 저장했습니다.'; }
         break;
       case 'gemini-generate': geminiGenerate(); break;
+      case 'free-generate': freeGenerate(); break;
       default: break;
     }
   }
